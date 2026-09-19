@@ -1,154 +1,2365 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DoodleTales - AI Storybook Stage</title>
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-slate-900 text-slate-100 min-h-screen p-6 font-sans">
 
-  <div class="max-w-4xl mx-auto space-y-6">
-    
-    <!-- Header -->
-    <header class="text-center space-y-2">
-      <h1 class="text-4xl font-extrabold text-amber-400 tracking-wide">🎨 DoodleTales</h1>
-      <p class="text-slate-400">Hold up a paper drawing to the camera to bring your character to life!</p>
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>DoodleTales ✨</title>
+
+  <style>
+
+    /* ========================================================
+       RESET
+    ======================================================== */
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family:
+        "Trebuchet MS",
+        "Arial Rounded MT Bold",
+        Arial,
+        sans-serif;
+
+      color: #30264d;
+
+      background:
+        radial-gradient(
+          circle at 10% 10%,
+          #fff3a8 0,
+          transparent 22%
+        ),
+        radial-gradient(
+          circle at 90% 15%,
+          #c8f7ff 0,
+          transparent 24%
+        ),
+        radial-gradient(
+          circle at 20% 90%,
+          #ffd5ec 0,
+          transparent 25%
+        ),
+        linear-gradient(
+          135deg,
+          #f7f0ff,
+          #eef8ff,
+          #fff8ef
+        );
+
+      overflow-x: hidden;
+    }
+
+
+    /* ========================================================
+       FLOATING DECORATIONS
+    ======================================================== */
+
+    .decoration {
+      position: fixed;
+      pointer-events: none;
+      z-index: 0;
+      user-select: none;
+      animation: drift 5s ease-in-out infinite;
+    }
+
+    .star-1 {
+      top: 100px;
+      left: 4%;
+      font-size: 34px;
+    }
+
+    .star-2 {
+      top: 300px;
+      right: 5%;
+      font-size: 28px;
+      animation-delay: 1s;
+    }
+
+    .star-3 {
+      bottom: 120px;
+      left: 7%;
+      font-size: 25px;
+      animation-delay: 2s;
+    }
+
+    .cloud-1 {
+      top: 180px;
+      right: 8%;
+      font-size: 42px;
+      animation-delay: 1.5s;
+    }
+
+    .cloud-2 {
+      top: 480px;
+      left: 3%;
+      font-size: 36px;
+      animation-delay: 2.5s;
+    }
+
+    @keyframes drift {
+
+      0%,
+      100% {
+        transform: translateY(0) rotate(-3deg);
+      }
+
+      50% {
+        transform: translateY(-12px) rotate(3deg);
+      }
+
+    }
+
+
+    /* ========================================================
+       MAIN CONTAINER
+    ======================================================== */
+
+    .container {
+      position: relative;
+      z-index: 1;
+
+      width: min(94%, 1100px);
+
+      margin: 0 auto;
+
+      padding:
+        28px
+        0
+        70px;
+    }
+
+
+    /* ========================================================
+       HEADER
+    ======================================================== */
+
+    .header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+
+      margin: 0;
+
+      font-size: clamp(42px, 7vw, 68px);
+      font-weight: 900;
+
+      letter-spacing: -2px;
+
+      background:
+        linear-gradient(
+          135deg,
+          #7554ff,
+          #b84dff,
+          #ff6fae
+        );
+
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+
+      filter:
+        drop-shadow(
+          0 5px 0 rgba(117, 84, 255, 0.08)
+        );
+    }
+
+    .logo-sparkle {
+      display: inline-block;
+      color: #ffbd3f;
+      animation: sparkle 1.8s ease-in-out infinite;
+    }
+
+    @keyframes sparkle {
+
+      0%,
+      100% {
+        transform: scale(1) rotate(0deg);
+      }
+
+      50% {
+        transform: scale(1.2) rotate(12deg);
+      }
+
+    }
+
+    .tagline {
+      margin: 4px 0 0;
+
+      font-size: clamp(17px, 3vw, 21px);
+      font-weight: 700;
+
+      color: #675d80;
+    }
+
+    .header-hint {
+      margin-top: 10px;
+
+      font-size: 14px;
+      color: #9188a5;
+    }
+
+
+    /* ========================================================
+       STEP INDICATOR
+    ======================================================== */
+
+    .steps {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      gap: 8px;
+
+      margin:
+        0 auto
+        24px;
+
+      max-width: 650px;
+    }
+
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+
+      padding: 8px 14px;
+
+      border-radius: 999px;
+
+      background: rgba(255, 255, 255, 0.72);
+
+      border: 2px solid rgba(117, 84, 255, 0.08);
+
+      font-size: 13px;
+      font-weight: 800;
+
+      color: #8a819e;
+
+      transition:
+        transform 0.2s ease,
+        background 0.2s ease;
+    }
+
+    .step.active {
+      color: #6848df;
+
+      background: #ffffff;
+
+      border-color: #cfc2ff;
+
+      box-shadow:
+        0 5px 18px rgba(117, 84, 255, 0.1);
+    }
+
+    .step-number {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      width: 25px;
+      height: 25px;
+
+      border-radius: 50%;
+
+      background: #eee9ff;
+
+      font-size: 12px;
+    }
+
+    .step.active .step-number {
+      background: #7c5cff;
+      color: white;
+    }
+
+    .step-line {
+      width: 25px;
+      height: 3px;
+
+      border-radius: 10px;
+
+      background: #ddd6ed;
+    }
+
+
+    /* ========================================================
+       MAIN GRID
+    ======================================================== */
+
+    .main-grid {
+      display: grid;
+
+      grid-template-columns:
+        minmax(0, 1fr)
+        minmax(0, 1fr);
+
+      gap: 24px;
+
+      align-items: start;
+    }
+
+
+    /* ========================================================
+       CARDS
+    ======================================================== */
+
+    .card {
+      background:
+        rgba(255, 255, 255, 0.88);
+
+      border:
+        1px solid
+        rgba(255, 255, 255, 0.9);
+
+      border-radius: 28px;
+
+      padding: 22px;
+
+      box-shadow:
+        0 18px 45px
+        rgba(70, 47, 120, 0.10);
+
+      backdrop-filter: blur(12px);
+
+      transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+
+      box-shadow:
+        0 23px 55px
+        rgba(70, 47, 120, 0.14);
+    }
+
+
+    /* ========================================================
+       CARD HEADERS
+    ======================================================== */
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+
+      margin-bottom: 17px;
+    }
+
+    .card-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      width: 48px;
+      height: 48px;
+
+      flex-shrink: 0;
+
+      border-radius: 15px;
+
+      font-size: 25px;
+
+      background:
+        linear-gradient(
+          135deg,
+          #eee8ff,
+          #fce8f5
+        );
+
+      box-shadow:
+        0 5px 15px
+        rgba(117, 84, 255, 0.10);
+    }
+
+    .card-title {
+      margin: 0;
+
+      font-size: 22px;
+      font-weight: 900;
+
+      color: #342850;
+    }
+
+    .card-subtitle {
+      margin: 3px 0 0;
+
+      font-size: 13px;
+      color: #9389a6;
+      font-weight: 600;
+    }
+
+
+    /* ========================================================
+       CAMERA
+    ======================================================== */
+
+    .camera-wrapper {
+      position: relative;
+
+      overflow: hidden;
+
+      border-radius: 22px;
+
+      background:
+        linear-gradient(
+          145deg,
+          #2c2644,
+          #50436e
+        );
+
+      padding: 8px;
+
+      box-shadow:
+        inset 0 0 0 2px
+        rgba(255,255,255,0.08);
+    }
+
+    video {
+      width: 100%;
+
+      aspect-ratio: 4 / 3;
+
+      object-fit: cover;
+
+      display: block;
+
+      border-radius: 16px;
+
+      background: #242033;
+    }
+
+    /* Scanner corners */
+
+    .scanner-corner {
+      position: absolute;
+
+      width: 35px;
+      height: 35px;
+
+      border-color: white;
+      border-style: solid;
+
+      z-index: 2;
+
+      pointer-events: none;
+    }
+
+    .corner-tl {
+      top: 18px;
+      left: 18px;
+
+      border-width: 4px 0 0 4px;
+
+      border-radius: 8px 0 0 0;
+    }
+
+    .corner-tr {
+      top: 18px;
+      right: 18px;
+
+      border-width: 4px 4px 0 0;
+
+      border-radius: 0 8px 0 0;
+    }
+
+    .corner-bl {
+      bottom: 18px;
+      left: 18px;
+
+      border-width: 0 0 4px 4px;
+
+      border-radius: 0 0 0 8px;
+    }
+
+    .corner-br {
+      bottom: 18px;
+      right: 18px;
+
+      border-width: 0 4px 4px 0;
+
+      border-radius: 0 0 8px 0;
+    }
+
+    .camera-label {
+      position: absolute;
+
+      top: 19px;
+      left: 50%;
+
+      transform: translateX(-50%);
+
+      padding: 7px 13px;
+
+      border-radius: 999px;
+
+      background:
+        rgba(20, 15, 35, 0.65);
+
+      color: white;
+
+      font-size: 12px;
+      font-weight: 800;
+
+      backdrop-filter: blur(8px);
+
+      white-space: nowrap;
+    }
+
+
+    /* ========================================================
+       SCAN BUTTON
+    ======================================================== */
+
+    .scan-button {
+      width: 100%;
+
+      margin-top: 16px;
+
+      padding: 17px 22px;
+
+      border: none;
+      border-radius: 17px;
+
+      font-family: inherit;
+
+      font-size: 18px;
+      font-weight: 900;
+
+      color: white;
+
+      cursor: pointer;
+
+      background:
+        linear-gradient(
+          135deg,
+          #7657ff,
+          #a855f7
+        );
+
+      box-shadow:
+        0 8px 20px
+        rgba(117, 84, 255, 0.28);
+
+      transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease;
+    }
+
+    .scan-button:hover {
+      transform: translateY(-2px);
+
+      box-shadow:
+        0 12px 25px
+        rgba(117, 84, 255, 0.35);
+    }
+
+    .scan-button:active {
+      transform: translateY(1px);
+    }
+
+    .scan-button:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .tip {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+
+      margin-top: 13px;
+
+      color: #9188a4;
+
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+
+    /* ========================================================
+       STORY CARD
+    ======================================================== */
+
+    .story-card {
+      min-height: 100%;
+
+      background:
+        linear-gradient(
+          145deg,
+          rgba(255,255,255,0.96),
+          rgba(252,248,255,0.94)
+        );
+    }
+
+    .story-stage {
+      position: relative;
+
+      overflow: hidden;
+
+      min-height: 245px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      margin-bottom: 18px;
+
+      border-radius: 23px;
+
+      background:
+        linear-gradient(
+          135deg,
+          #eef3ff,
+          #fff1f8
+        );
+
+      border:
+        2px solid
+        rgba(117,84,255,0.07);
+    }
+
+    .story-stage::before {
+      content: "";
+
+      position: absolute;
+
+      width: 180px;
+      height: 180px;
+
+      top: -80px;
+      right: -50px;
+
+      border-radius: 50%;
+
+      background: #fff2a8;
+
+      opacity: 0.55;
+    }
+
+    .story-stage::after {
+      content: "";
+
+      position: absolute;
+
+      width: 140px;
+      height: 140px;
+
+      bottom: -70px;
+      left: -40px;
+
+      border-radius: 50%;
+
+      background: #d6c8ff;
+
+      opacity: 0.45;
+    }
+
+    #characterImage {
+      position: relative;
+
+      z-index: 2;
+
+      width: 100%;
+
+      max-height: 390px;
+
+      object-fit: contain;
+
+      border-radius: 17px;
+
+      display: none;
+
+      padding: 8px;
+
+      transition:
+        transform 0.3s ease;
+    }
+
+    #characterImage:hover {
+      transform: scale(1.02);
+    }
+
+
+    /* ========================================================
+       EMPTY STORY STATE
+    ======================================================== */
+
+    .empty-story {
+      position: relative;
+      z-index: 3;
+
+      text-align: center;
+
+      padding: 30px 20px;
+    }
+
+    .empty-book {
+      font-size: 55px;
+
+      display: block;
+
+      margin-bottom: 12px;
+
+      animation:
+        bookFloat 2.5s
+        ease-in-out
+        infinite;
+    }
+
+    @keyframes bookFloat {
+
+      0%,
+      100% {
+        transform: translateY(0) rotate(-2deg);
+      }
+
+      50% {
+        transform: translateY(-8px) rotate(2deg);
+      }
+
+    }
+
+    .empty-title {
+      margin: 0 0 6px;
+
+      font-size: 18px;
+      font-weight: 900;
+
+      color: #4b3d68;
+    }
+
+    .empty-description {
+      margin: 0;
+
+      font-size: 13px;
+      line-height: 1.5;
+
+      color: #968ba9;
+    }
+
+
+    /* ========================================================
+       STORY TEXT
+    ======================================================== */
+
+    .story-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      margin-bottom: 8px;
+    }
+
+    .chapter {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+
+      padding: 6px 10px;
+
+      border-radius: 999px;
+
+      background: #f0ebff;
+
+      color: #7055c9;
+
+      font-size: 11px;
+      font-weight: 900;
+
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .narration {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+
+      font-size: 11px;
+      font-weight: 700;
+
+      color: #9b91aa;
+
+      opacity: 0;
+
+      transition: opacity 0.3s ease;
+    }
+
+    .narration.visible {
+      opacity: 1;
+    }
+
+    .sound-dot {
+      width: 7px;
+      height: 7px;
+
+      border-radius: 50%;
+
+      background: #7b5cff;
+
+      animation:
+        soundPulse 0.8s
+        ease-in-out
+        infinite alternate;
+    }
+
+    @keyframes soundPulse {
+
+      from {
+        transform: scale(0.7);
+        opacity: 0.5;
+      }
+
+      to {
+        transform: scale(1.2);
+        opacity: 1;
+      }
+
+    }
+
+    #storyText {
+      margin: 0;
+
+      min-height: 75px;
+
+      font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+      font-size: 19px;
+
+      line-height: 1.65;
+
+      color: #443653;
+
+      text-align: left;
+
+      padding: 17px 18px;
+
+      border-radius: 17px;
+
+      background:
+        #fffaf3;
+
+      border-left:
+        5px solid
+        #a78bfa;
+
+      box-shadow:
+        inset 0 0 20px
+        rgba(255, 200, 100, 0.04);
+    }
+
+
+    /* ========================================================
+       CHOICES
+    ======================================================== */
+
+    .choice-heading {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      margin:
+        18px
+        0
+        10px;
+
+      font-size: 14px;
+      font-weight: 900;
+
+      color: #5c4d78;
+    }
+
+    .choice-heading span {
+      font-size: 18px;
+    }
+
+    .choices {
+      display: grid;
+
+      grid-template-columns:
+        repeat(2, 1fr);
+
+      gap: 12px;
+
+      margin-top: 0;
+    }
+
+    .story-choice {
+      position: relative;
+
+      min-height: 75px;
+
+      padding:
+        13px
+        15px
+        13px
+        46px;
+
+      border:
+        2px solid
+        #e4dcfa;
+
+      border-radius: 17px;
+
+      background:
+        linear-gradient(
+          145deg,
+          #f9f6ff,
+          #fff
+        );
+
+      color: #443563;
+
+      font-family: inherit;
+
+      font-size: 14px;
+      line-height: 1.35;
+
+      font-weight: 800;
+
+      text-align: left;
+
+      cursor: pointer;
+
+      box-shadow:
+        0 5px 14px
+        rgba(70, 47, 120, 0.06);
+
+      transition:
+        transform 0.18s ease,
+        border-color 0.18s ease,
+        box-shadow 0.18s ease;
+    }
+
+    .story-choice::before {
+      content: "✨";
+
+      position: absolute;
+
+      left: 14px;
+      top: 50%;
+
+      transform:
+        translateY(-50%);
+
+      width: 25px;
+      height: 25px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      border-radius: 50%;
+
+      background: #eee8ff;
+
+      font-size: 13px;
+    }
+
+    .story-choice:hover {
+      transform: translateY(-3px);
+
+      border-color: #a994ff;
+
+      box-shadow:
+        0 10px 22px
+        rgba(117, 84, 255, 0.13);
+
+      background:
+        linear-gradient(
+          145deg,
+          #f3efff,
+          #fff
+        );
+    }
+
+    .story-choice:active {
+      transform: translateY(0);
+    }
+
+    .story-choice:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+
+    /* ========================================================
+       ANIMATIONS
+    ======================================================== */
+
+    .bounce {
+      animation:
+        bounce 1s ease infinite;
+    }
+
+    .jump {
+      animation:
+        jump 1s ease infinite;
+    }
+
+    .spin {
+      animation:
+        spin 2s linear infinite;
+    }
+
+    .shake {
+      animation:
+        shake 0.5s ease infinite;
+    }
+
+    .float {
+      animation:
+        float 2s ease-in-out infinite;
+    }
+
+    .fly {
+      animation:
+        fly 2s ease-in-out infinite;
+    }
+
+    .walk {
+      animation:
+        walk 0.7s ease-in-out infinite;
+    }
+
+    .idle {
+      animation:
+        idle 2.5s ease-in-out infinite;
+    }
+
+    @keyframes bounce {
+
+      0%, 100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-25px);
+      }
+
+    }
+
+    @keyframes jump {
+
+      0%, 100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-45px);
+      }
+
+    }
+
+    @keyframes spin {
+
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(360deg);
+      }
+
+    }
+
+    @keyframes shake {
+
+      0%, 100% {
+        transform: translateX(0);
+      }
+
+      25% {
+        transform: translateX(-10px);
+      }
+
+      75% {
+        transform: translateX(10px);
+      }
+
+    }
+
+    @keyframes float {
+
+      0%, 100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-15px);
+      }
+
+    }
+
+    @keyframes fly {
+
+      0%, 100% {
+        transform: translate(0, 0);
+      }
+
+      50% {
+        transform: translate(20px, -20px);
+      }
+
+    }
+
+    @keyframes walk {
+
+      0%, 100% {
+        transform: translateX(-5px);
+      }
+
+      50% {
+        transform: translateX(5px);
+      }
+
+    }
+
+    @keyframes idle {
+
+      0%, 100% {
+        transform: translateY(0) rotate(0);
+      }
+
+      50% {
+        transform: translateY(-5px) rotate(1deg);
+      }
+
+    }
+
+
+    /* ========================================================
+       LOADING
+    ======================================================== */
+
+    .loading-dots {
+      display: inline-flex;
+
+      gap: 5px;
+
+      margin-left: 6px;
+    }
+
+    .loading-dots span {
+      width: 6px;
+      height: 6px;
+
+      border-radius: 50%;
+
+      background: white;
+
+      animation:
+        loadingDot 1s
+        infinite;
+    }
+
+    .loading-dots span:nth-child(2) {
+      animation-delay: 0.15s;
+    }
+
+    .loading-dots span:nth-child(3) {
+      animation-delay: 0.3s;
+    }
+
+    @keyframes loadingDot {
+
+      0%,
+      70%,
+      100% {
+        transform: translateY(0);
+        opacity: 0.5;
+      }
+
+      35% {
+        transform: translateY(-5px);
+        opacity: 1;
+      }
+
+    }
+
+
+    /* ========================================================
+       FOOTER
+    ======================================================== */
+
+    .footer {
+      text-align: center;
+
+      margin-top: 25px;
+
+      font-size: 12px;
+
+      color: #a198b2;
+
+      font-weight: 600;
+    }
+
+    .footer span {
+      color: #8065d8;
+      font-weight: 900;
+    }
+
+
+    /* ========================================================
+       RESPONSIVE
+    ======================================================== */
+
+    @media (max-width: 800px) {
+
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .story-card {
+        min-height: auto;
+      }
+
+      .decoration {
+        display: none;
+      }
+
+    }
+
+
+    @media (max-width: 520px) {
+
+      .container {
+        width: 94%;
+        padding-top: 18px;
+      }
+
+      .logo {
+        font-size: 43px;
+      }
+
+      .tagline {
+        font-size: 16px;
+      }
+
+      .steps {
+        gap: 4px;
+      }
+
+      .step {
+        padding: 7px 9px;
+        font-size: 11px;
+      }
+
+      .step-line {
+        width: 10px;
+      }
+
+      .card {
+        padding: 16px;
+        border-radius: 23px;
+      }
+
+      .choices {
+        grid-template-columns: 1fr;
+      }
+
+      #storyText {
+        font-size: 18px;
+      }
+
+    }
+
+  </style>
+
+</head>
+
+
+<body>
+
+
+  <!-- ======================================================
+       DECORATIONS
+  ======================================================= -->
+
+  <div class="decoration star-1">⭐</div>
+  <div class="decoration star-2">✨</div>
+  <div class="decoration star-3">🌟</div>
+
+  <div class="decoration cloud-1">☁️</div>
+  <div class="decoration cloud-2">☁️</div>
+
+
+  <div class="container">
+
+
+    <!-- ====================================================
+         HEADER
+    ===================================================== -->
+
+    <header class="header">
+
+      <h1 class="logo">
+        🎨 DoodleTales
+        <span class="logo-sparkle">✦</span>
+      </h1>
+
+      <p class="tagline">
+        Your drawing has a story to tell!
+      </p>
+
+      <p class="header-hint">
+        Draw • Scan • Imagine • Choose • Continue
+      </p>
+
     </header>
 
-    <!-- Main Workspace Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      
-      <!-- Left Column: Camera Feed -->
-      <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 flex flex-col items-center space-y-4 shadow-xl">
-        <div class="relative w-full aspect-video bg-black rounded-xl overflow-hidden border border-slate-700 shadow-inner">
-          <video id="webcam" autoplay playsinline class="w-full h-full object-cover"></video>
-          <canvas id="canvas" class="hidden"></canvas>
-        </div>
-        <button id="snapBtn" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-3 rounded-xl shadow-lg transition-transform active:scale-95 text-lg">
-          📸 Scan My Drawing
-        </button>
+
+    <!-- ====================================================
+         STEPS
+    ===================================================== -->
+
+    <div class="steps">
+
+      <div class="step active">
+        <span class="step-number">1</span>
+        Draw
       </div>
 
-      <!-- Right Column: Interactive Story Stage -->
-      <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 flex flex-col justify-between min-h-[320px] relative overflow-hidden shadow-xl">
-        
-        <!-- Loading Overlay -->
-        <div id="loader" class="hidden absolute inset-0 bg-slate-900/90 backdrop-blur-sm flex flex-col items-center justify-center space-y-3 z-10">
-          <div class="w-10 h-10 border-4 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
-          <p class="text-amber-300 font-medium">Gemini is bringing your artwork to life...</p>
-        </div>
+      <div class="step-line"></div>
 
-        <!-- Output Story Content -->
-        <div class="space-y-4">
-          <div id="badge" class="inline-block bg-amber-500/20 text-amber-300 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider border border-amber-500/30">
-            Waiting for drawing...
-          </div>
-          <h2 id="charTitle" class="text-2xl font-bold text-white">Your Story Engine</h2>
-          <p id="storyText" class="text-slate-300 leading-relaxed italic">
-            "Draw a creature, robot, or animal on paper with crayons. Hold it up to the camera and click 'Scan My Drawing'!"
-          </p>
-        </div>
+      <div class="step">
+        <span class="step-number">2</span>
+        Scan
+      </div>
 
-        <!-- Audio Controller -->
-        <div class="pt-4 border-t border-slate-700 flex justify-between items-center">
-          <button id="speakBtn" disabled class="bg-slate-700 text-slate-400 px-4 py-2 rounded-lg font-semibold text-sm flex items-center gap-2 cursor-not-allowed">
-            🔊 Replay Speech
-          </button>
-        </div>
+      <div class="step-line"></div>
+
+      <div class="step">
+        <span class="step-number">3</span>
+        Story
       </div>
 
     </div>
+
+
+    <!-- ====================================================
+         MAIN
+    ===================================================== -->
+
+    <main class="main-grid">
+
+
+      <!-- ==================================================
+           CAMERA CARD
+      =================================================== -->
+
+      <section class="card">
+
+
+        <div class="card-header">
+
+          <div class="card-icon">
+            📸
+          </div>
+
+          <div>
+
+            <h2 class="card-title">
+              Bring Your Drawing
+            </h2>
+
+            <p class="card-subtitle">
+              Show DoodleTales your masterpiece!
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div class="camera-wrapper">
+
+          <video
+            id="video"
+            autoplay
+            playsinline
+          ></video>
+
+          <div class="camera-label">
+            📷 Point at your drawing
+          </div>
+
+          <div
+            class="scanner-corner corner-tl"
+          ></div>
+
+          <div
+            class="scanner-corner corner-tr"
+          ></div>
+
+          <div
+            class="scanner-corner corner-bl"
+          ></div>
+
+          <div
+            class="scanner-corner corner-br"
+          ></div>
+
+        </div>
+
+
+        <canvas id="canvas"></canvas>
+
+
+        <button
+          id="captureButton"
+          class="scan-button"
+        >
+          ✨ Scan My Drawing
+        </button>
+
+
+        <div class="tip">
+          💡 Tip: Make sure your whole drawing is visible!
+        </div>
+
+
+      </section>
+
+
+
+      <!-- ==================================================
+           STORY CARD
+      =================================================== -->
+
+      <section class="card story-card">
+
+
+        <div class="card-header">
+
+          <div class="card-icon">
+            📖
+          </div>
+
+          <div>
+
+            <h2 class="card-title">
+              Your Story
+            </h2>
+
+            <p class="card-subtitle">
+              Watch your imagination come alive!
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <!-- STORY STAGE -->
+
+        <div class="story-stage">
+
+
+          <div
+            id="emptyStory"
+            class="empty-story"
+          >
+
+            <span class="empty-book">
+              📖
+            </span>
+
+            <h3 class="empty-title">
+              Your adventure starts here!
+            </h3>
+
+            <p class="empty-description">
+              Scan your drawing and Gemini will
+              turn it into a magical story.
+            </p>
+
+          </div>
+
+
+          <img
+            id="characterImage"
+            alt="Your storybook character"
+          >
+
+
+        </div>
+
+
+        <!-- STORY META -->
+
+        <div class="story-label">
+
+          <div
+            id="chapterLabel"
+            class="chapter"
+          >
+            ✨ Chapter 1
+          </div>
+
+          <div
+            id="narrationIndicator"
+            class="narration"
+          >
+            <span class="sound-dot"></span>
+            🔊 Narrating
+          </div>
+
+        </div>
+
+
+        <!-- STORY -->
+
+        <div id="storyText">
+
+          Draw something and scan it
+          to begin your adventure!
+
+        </div>
+
+
+        <!-- CHOICES -->
+
+        <div
+          id="choiceHeading"
+          class="choice-heading"
+          style="display:none;"
+        >
+
+          <span>🪄</span>
+
+          What should happen next?
+
+        </div>
+
+
+        <div
+          id="choices"
+          class="choices"
+        ></div>
+
+
+      </section>
+
+
+    </main>
+
+
+    <!-- ====================================================
+         FOOTER
+    ===================================================== -->
+
+    <footer class="footer">
+
+      ✨ Powered by
+      <span>Gemini</span>
+      • Made for curious creators
+
+    </footer>
+
+
   </div>
 
-  <!-- Frontend Logic -->
+
+
   <script>
-    const video = document.getElementById('webcam');
-    const canvas = document.getElementById('canvas');
-    const snapBtn = document.getElementById('snapBtn');
-    const loader = document.getElementById('loader');
-    const badge = document.getElementById('badge');
-    const charTitle = document.getElementById('charTitle');
-    const storyText = document.getElementById('storyText');
-    const speakBtn = document.getElementById('speakBtn');
 
-    let currentStory = "";
+    // ========================================================
+    // STATE
+    // ========================================================
 
-    // 1. Initialize Camera Feed
-    async function startWebcam() {
+    let currentStoryData = null;
+
+    let currentDrawing = null;
+
+    let chapterNumber = 1;
+
+
+    // ========================================================
+    // ELEMENTS
+    // ========================================================
+
+    const video =
+      document.getElementById('video');
+
+    const canvas =
+      document.getElementById('canvas');
+
+    const captureButton =
+      document.getElementById(
+        'captureButton'
+      );
+
+    const characterImage =
+      document.getElementById(
+        'characterImage'
+      );
+
+    const storyText =
+      document.getElementById(
+        'storyText'
+      );
+
+    const choicesContainer =
+      document.getElementById(
+        'choices'
+      );
+
+    const emptyStory =
+      document.getElementById(
+        'emptyStory'
+      );
+
+    const choiceHeading =
+      document.getElementById(
+        'choiceHeading'
+      );
+
+    const chapterLabel =
+      document.getElementById(
+        'chapterLabel'
+      );
+
+    const narrationIndicator =
+      document.getElementById(
+        'narrationIndicator'
+      );
+
+
+    // ========================================================
+    // CAMERA
+    // ========================================================
+
+    async function startCamera() {
+
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
-        video.srcObject = stream;
-      } catch (err) {
-        alert("Camera access denied or unavailable. Please allow camera permissions.");
+
+        const stream =
+          await navigator.mediaDevices.getUserMedia({
+
+            video: {
+              facingMode: 'environment'
+            },
+
+            audio: false
+
+          });
+
+        video.srcObject =
+          stream;
+
+        console.log(
+          '📷 Camera started'
+        );
+
+      } catch (error) {
+
+        console.error(
+          '❌ Camera error:',
+          error
+        );
+
+        alert(
+          'Could not access the camera. Please allow camera access.'
+        );
+
       }
-    }
-    startWebcam();
 
-    // 2. Capture Frame from Video Feed
-    function captureSnapshot() {
-      const context = canvas.getContext('2d');
-      canvas.width = video.videoWidth || 640;
-      canvas.height = video.videoHeight || 480;
-      context.drawImage(video, 0, 0, canvas.width, canvas.height);
-      return canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
     }
 
-    // 3. Send Frame to Backend Endpoint
-    snapBtn.addEventListener('click', async () => {
-      loader.classList.remove('hidden');
-      const base64Image = captureSnapshot();
+
+    // ========================================================
+    // CAPTURE DRAWING
+    // ========================================================
+
+    function captureDrawing() {
+
+      if (
+        !video.videoWidth ||
+        !video.videoHeight
+      ) {
+
+        alert(
+          'Camera is not ready yet.'
+        );
+
+        return null;
+      }
+
+      canvas.width =
+        video.videoWidth;
+
+      canvas.height =
+        video.videoHeight;
+
+      const context =
+        canvas.getContext('2d');
+
+      context.drawImage(
+
+        video,
+
+        0,
+        0,
+
+        canvas.width,
+        canvas.height
+
+      );
+
+      const imageBase64 =
+        canvas.toDataURL(
+          'image/jpeg',
+          0.85
+        );
+
+      currentDrawing =
+        imageBase64;
+
+      console.log(
+        '📸 Drawing captured'
+      );
+
+      return imageBase64;
+
+    }
+
+
+    // ========================================================
+    // SCAN DRAWING
+    // ========================================================
+
+    async function scanDrawing() {
+
+      const imageBase64 =
+        captureDrawing();
+
+      if (!imageBase64) {
+        return;
+      }
+
+
+      // Reset story
+
+      chapterNumber = 1;
+
+      updateChapter();
+
+
+      // Loading state
+
+      storyText.textContent =
+        '✨ Bringing your drawing to life...';
+
+      choicesContainer.innerHTML =
+        '';
+
+      choiceHeading.style.display =
+        'none';
+
+      characterImage.style.display =
+        'none';
+
+      emptyStory.style.display =
+        'block';
+
+      captureButton.disabled =
+        true;
+
+
+      captureButton.innerHTML =
+        `✨ Creating Your Story
+        <span class="loading-dots">
+          <span></span>
+          <span></span>
+          <span></span>
+        </span>`;
+
 
       try {
-        const response = await fetch('/api/scan-drawing', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ imageBase64: base64Image })
-        });
+
+        console.log(
+          '📤 Sending drawing...'
+        );
+
+
+        const response =
+          await fetch(
+            '/api/scan-drawing',
+            {
+
+              method: 'POST',
+
+              headers: {
+                'Content-Type':
+                  'application/json'
+              },
+
+              body:
+                JSON.stringify({
+                  imageBase64
+                })
+
+            }
+          );
+
+
+        const data =
+          await response.json();
+
 
         if (!response.ok) {
-          throw new Error("Failed to process drawing.");
+
+          throw new Error(
+            data.error ||
+            'Could not analyze drawing.'
+          );
+
         }
 
-        const data = await response.json();
 
-        // Update UI
-        badge.innerText = "Character Recognized!";
-        charTitle.innerText = data.character_name;
-        storyText.innerText = `"${data.story}"`;
-        currentStory = data.story;
+        // ====================================================
+        // SAVE STATE
+        // ====================================================
 
-        // Automatically Narrate Story
-        speakText(data.story);
+        currentStoryData =
+          data;
 
-        // Enable Audio Replay Button
-        speakBtn.disabled = false;
-        speakBtn.classList.remove('bg-slate-700', 'text-slate-400', 'cursor-not-allowed');
-        speakBtn.classList.add('bg-amber-500/20', 'text-amber-300', 'hover:bg-amber-500/30');
+        currentDrawing =
+          imageBase64;
 
-      } catch (err) {
-        console.error(err);
-        alert("Error analyzing drawing. Ensure your backend server is running and GEMINI_API_KEY is valid in .env.");
+
+        console.log(
+          '✅ Character:',
+          data.character
+        );
+
+        console.log(
+          '✅ Story:',
+          data.story
+        );
+
+        console.log(
+          '✅ Choices:',
+          data.choices
+        );
+
+
+        // ====================================================
+        // DISPLAY STORY
+        // ====================================================
+
+        storyText.textContent =
+          data.story;
+
+
+        // ====================================================
+        // DISPLAY IMAGE
+        // ====================================================
+
+        if (
+          data.generated_image
+        ) {
+
+          characterImage.src =
+            `data:${data.generated_image_mime};base64,${data.generated_image}`;
+
+          characterImage.style.display =
+            'block';
+
+          emptyStory.style.display =
+            'none';
+
+        }
+
+
+        // ====================================================
+        // SHOW CHOICES
+        // ====================================================
+
+        showChoices(
+          data.choices
+        );
+
+
+        // ====================================================
+        // ANIMATION
+        // ====================================================
+
+        animateCharacter(
+          data.animation
+        );
+
+
+        // ====================================================
+        // SPEAK
+        // ====================================================
+
+        speakStory(
+          data.story
+        );
+
+
+      } catch (error) {
+
+        console.error(
+          '❌ Scan error:',
+          error
+        );
+
+        storyText.textContent =
+          'Oops! Something went wrong while creating your story.';
+
+        alert(
+          error.message
+        );
+
       } finally {
-        loader.classList.add('hidden');
-      }
-    });
 
-    // 4. Browser Text-to-Speech Synthesis
-    function speakText(text) {
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.rate = 0.9;
-        utterance.pitch = 1.1;
-        window.speechSynthesis.speak(utterance);
+        captureButton.disabled =
+          false;
+
+        captureButton.innerHTML =
+          '📸 Scan My Drawing';
+
       }
+
     }
 
-    speakBtn.addEventListener('click', () => {
-      if (currentStory) speakText(currentStory);
-    });
+
+    // ========================================================
+    // SHOW CHOICES
+    // ========================================================
+
+    function showChoices(
+      choices
+    ) {
+
+      choicesContainer.innerHTML =
+        '';
+
+
+      if (
+        !Array.isArray(choices) ||
+        choices.length === 0
+      ) {
+
+        choiceHeading.style.display =
+          'none';
+
+        return;
+
+      }
+
+
+      choiceHeading.style.display =
+        'flex';
+
+
+      choices
+        .slice(0, 2)
+        .forEach(
+          (choice, index) => {
+
+            const button =
+              document.createElement(
+                'button'
+              );
+
+
+            button.className =
+              'story-choice';
+
+
+            button.textContent =
+              choice;
+
+
+            button.addEventListener(
+              'click',
+              () => {
+
+                continueStory(
+                  choice
+                );
+
+              }
+            );
+
+
+            choicesContainer.appendChild(
+              button
+            );
+
+          }
+        );
+
+    }
+
+
+    // ========================================================
+    // CONTINUE STORY
+    // ========================================================
+
+    async function continueStory(
+      choice
+    ) {
+
+      if (!currentStoryData) {
+
+        alert(
+          'Please scan a drawing first.'
+        );
+
+        return;
+
+      }
+
+
+      if (
+        !currentStoryData.character
+      ) {
+
+        console.error(
+          '❌ Missing character:',
+          currentStoryData
+        );
+
+        alert(
+          'Character information is missing. Please scan again.'
+        );
+
+        return;
+
+      }
+
+
+      // Disable choice buttons
+
+      const buttons =
+        document.querySelectorAll(
+          '.story-choice'
+        );
+
+
+      buttons.forEach(
+        button => {
+
+          button.disabled =
+            true;
+
+        }
+      );
+
+
+      storyText.textContent =
+        '✨ Gemini is writing the next part...';
+
+
+      try {
+
+        const requestBody = {
+
+          character:
+            currentStoryData.character,
+
+          currentStory:
+            currentStoryData.story,
+
+          choice:
+            choice,
+
+          currentScene:
+            currentStoryData.scene
+
+        };
+
+
+        console.log(
+          '📤 Sending:',
+          requestBody
+        );
+
+
+        const response =
+          await fetch(
+            '/api/continue-story',
+            {
+
+              method: 'POST',
+
+              headers: {
+                'Content-Type':
+                  'application/json'
+              },
+
+              body:
+                JSON.stringify(
+                  requestBody
+                )
+
+            }
+          );
+
+
+        const data =
+          await response.json();
+
+
+        if (!response.ok) {
+
+          throw new Error(
+            data.error ||
+            'Could not continue the story.'
+          );
+
+        }
+
+
+        console.log(
+          '✅ Story continued'
+        );
+
+
+        // ====================================================
+        // UPDATE STATE
+        // ====================================================
+
+        currentStoryData.story =
+          data.story;
+
+        currentStoryData.scene =
+          data.scene;
+
+        currentStoryData.animation =
+          data.animation;
+
+        currentStoryData.choices =
+          data.choices;
+
+
+        chapterNumber++;
+
+        updateChapter();
+
+
+        // ====================================================
+        // DISPLAY STORY
+        // ====================================================
+
+        storyText.textContent =
+          data.story;
+
+
+        // ====================================================
+        // SHOW CHOICES
+        // ====================================================
+
+        showChoices(
+          data.choices
+        );
+
+
+        // ====================================================
+        // ANIMATE
+        // ====================================================
+
+        animateCharacter(
+          data.animation
+        );
+
+
+        // ====================================================
+        // SPEAK
+        // ====================================================
+
+        speakStory(
+          data.story
+        );
+
+
+      } catch (error) {
+
+        console.error(
+          '❌ Continuation error:',
+          error
+        );
+
+
+        storyText.textContent =
+          currentStoryData.story;
+
+
+        alert(
+          error.message ||
+          'Could not continue the story.'
+        );
+
+
+        buttons.forEach(
+          button => {
+
+            button.disabled =
+              false;
+
+          }
+        );
+
+      }
+
+    }
+
+
+    // ========================================================
+    // CHAPTER
+    // ========================================================
+
+    function updateChapter() {
+
+      chapterLabel.textContent =
+        `✨ Chapter ${chapterNumber}`;
+
+    }
+
+
+    // ========================================================
+    // ANIMATION
+    // ========================================================
+
+    function animateCharacter(
+      animation
+    ) {
+
+      characterImage.classList.remove(
+
+        'fly',
+        'bounce',
+        'walk',
+        'jump',
+        'shake',
+        'float',
+        'spin',
+        'idle'
+
+      );
+
+
+      if (!animation) {
+        return;
+      }
+
+
+      characterImage.classList.add(
+        animation
+      );
+
+    }
+
+
+    // ========================================================
+    // SPEECH
+    // ========================================================
+
+    function speakStory(
+      text
+    ) {
+
+      if (
+        !text ||
+        !('speechSynthesis' in window)
+      ) {
+
+        return;
+
+      }
+
+
+      window.speechSynthesis.cancel();
+
+
+      narrationIndicator.classList.add(
+        'visible'
+      );
+
+
+      const utterance =
+        new SpeechSynthesisUtterance(
+          text
+        );
+
+
+      utterance.rate =
+        0.88;
+
+      utterance.pitch =
+        1.12;
+
+      utterance.volume =
+        1;
+
+
+      utterance.onend =
+        () => {
+
+          narrationIndicator.classList.remove(
+            'visible'
+          );
+
+        };
+
+
+      window.speechSynthesis.speak(
+        utterance
+      );
+
+    }
+
+
+    // ========================================================
+    // BUTTON
+    // ========================================================
+
+    captureButton.addEventListener(
+      'click',
+      scanDrawing
+    );
+
+
+    // ========================================================
+    // START
+    // ========================================================
+
+    startCamera();
+
   </script>
+
 </body>
+
 </html>
