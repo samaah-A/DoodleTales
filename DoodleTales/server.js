@@ -977,37 +977,57 @@ app.get(
 );
 
 
+// // ============================================================
+// // START SERVER
+// // ============================================================
+
+// app.listen(
+//   PORT,
+//   () => {
+
+//     console.log('');
+//     console.log(
+//       '======================================'
+//     );
+
+//     console.log(
+//       '🎨 DoodleTales is running!'
+//     );
+
+//     console.log(
+//       `🌐 http://localhost:${PORT}`
+//     );
+
+//     console.log(
+//       '======================================'
+//     );
+
+//     console.log(
+//       '🧠 Analysis models:',
+//       ANALYSIS_MODELS.join(', ')
+//     );
+
+//     console.log('');
+
+//   }
+// );
+
 // ============================================================
-// START SERVER
+// START SERVER & VERCEL EXPORT
 // ============================================================
 
-app.listen(
-  PORT,
-  () => {
-
+// Local development server listener
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
     console.log('');
-    console.log(
-      '======================================'
-    );
-
-    console.log(
-      '🎨 DoodleTales is running!'
-    );
-
-    console.log(
-      `🌐 http://localhost:${PORT}`
-    );
-
-    console.log(
-      '======================================'
-    );
-
-    console.log(
-      '🧠 Analysis models:',
-      ANALYSIS_MODELS.join(', ')
-    );
-
+    console.log('======================================');
+    console.log('🎨 DoodleTales is running!');
+    console.log(`🌐 http://localhost:${PORT}`);
+    console.log('======================================');
+    console.log('🧠 Analysis models:', ANALYSIS_MODELS.join(', '));
     console.log('');
+  });
+}
 
-  }
-);
+// Export the Express app for Vercel Serverless Execution
+export default app;
