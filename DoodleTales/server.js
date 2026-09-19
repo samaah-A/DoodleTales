@@ -5,52 +5,57 @@ import { GoogleGenAI } from '@google/genai';
 dotenv.config();
 
 const app = express();
+
 const PORT = process.env.PORT || 3000;
 
+const ai = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY
+});
+
+
 // ============================================================
-// MODELS
+// CONFIGURATION
 // ============================================================
 
 const ANALYSIS_MODELS = [
   'gemini-3.6-flash',
   'gemini-3.7-flash',
+  'gemini-3.5-flash'
 ];
 
-const IMAGE_MODEL = 'gemini-2.5-flash-image';
 
 // ============================================================
 // MIDDLEWARE
 // ============================================================
 
-app.use(express.json({ limit: '15mb' }));
+app.use(express.json({
+  limit: '15mb'
+}));
+
 app.use(express.static('.'));
 
-// ============================================================
-// GEMINI
-// ============================================================
 
-const apiKey = process.env.GEMINI_API_KEY;
-
-if (!apiKey) {
-  console.error('❌ GEMINI_API_KEY is missing.');
-  process.exit(1);
-}
-
-const ai = new GoogleGenAI({
-  apiKey
+app.get('/', (req, res) => {
+  res.sendFile(process.cwd() + '/index.html');
 });
 
+
 // ============================================================
-// RETRY
+// RETRY HELPER
 // ============================================================
 
 async function callWithRetry(fn, retries = 1) {
 
   let lastError;
 
-  for (let attempt = 0; attempt <= retries; attempt++) {
+  for (
+    let attempt = 0;
+    attempt <= retries;
+    attempt++
+  ) {
 
     try {
+
       return await fn();
 
     } catch (error) {
@@ -67,8 +72,7 @@ async function callWithRetry(fn, retries = 1) {
       );
 
       const message =
-        error?.message ||
-        '';
+        error?.message || '';
 
       // Do not retry zero-quota errors.
       if (
@@ -78,39 +82,45 @@ async function callWithRetry(fn, retries = 1) {
           message.includes('quota')
         )
       ) {
+
         throw error;
       }
 
+      // Only retry temporary server errors.
       if (
         status !== 500 &&
         status !== 503
       ) {
+
         throw error;
       }
 
       if (attempt < retries) {
-        await new Promise(resolve =>
-          setTimeout(resolve, 1500)
+
+        await new Promise(
+          resolve =>
+            setTimeout(resolve, 1500)
         );
+
       }
+
     }
+
   }
 
   throw lastError;
 }
+
 
 // ============================================================
 // STORY SCHEMA
 // ============================================================
 
 const storySchema = {
+
   type: 'object',
 
   properties: {
-
-    title: {
-      type: 'string'
-    },
 
     character: {
       type: 'string'
@@ -144,6 +154,20 @@ const storySchema = {
       type: 'string'
     },
 
+    animation: {
+      type: 'string',
+      enum: [
+        'fly',
+        'bounce',
+        'walk',
+        'jump',
+        'shake',
+        'float',
+        'spin',
+        'idle'
+      ]
+    },
+
     story: {
       type: 'string'
     },
@@ -153,62 +177,37 @@ const storySchema = {
       items: {
         type: 'string'
       }
-    },
-
-    animation: {
-      type: 'string',
-      enum: [
-        'fly',
-        'bounce',
-        'walk',
-        'jump',
-        'shake',
-        'float',
-        'spin',
-        'idle'
-      ]
     }
+
   },
 
   required: [
-    'title',
     'character',
     'type',
     'color',
     'mood',
     'scene',
     'action',
+    'animation',
     'story',
-    'choices',
-    'animation'
+    'choices'
   ]
+
 };
+
 
 // ============================================================
 // CONTINUATION SCHEMA
 // ============================================================
 
 const continuationSchema = {
+
   type: 'object',
 
   properties: {
 
     story: {
       type: 'string'
-    },
-
-    animation: {
-      type: 'string',
-      enum: [
-        'fly',
-        'bounce',
-        'walk',
-        'jump',
-        'shake',
-        'float',
-        'spin',
-        'idle'
-      ]
     },
 
     scene: {
@@ -223,21 +222,38 @@ const continuationSchema = {
       ]
     },
 
+    animation: {
+      type: 'string',
+      enum: [
+        'fly',
+        'bounce',
+        'walk',
+        'jump',
+        'shake',
+        'float',
+        'spin',
+        'idle'
+      ]
+    },
+
     choices: {
       type: 'array',
       items: {
         type: 'string'
       }
     }
+
   },
 
   required: [
     'story',
-    'animation',
     'scene',
+    'animation',
     'choices'
   ]
+
 };
+
 
 // ============================================================
 // CLEAN CHOICES
@@ -246,53 +262,300 @@ const continuationSchema = {
 function cleanChoices(choices) {
 
   if (!Array.isArray(choices)) {
-    return [
-      'Explore the world',
-      'Try something exciting'
-    ];
+    return [];
   }
 
   return choices
-    .slice(0, 2)
-    .map(choice => String(choice).trim())
-    .filter(Boolean);
+    .filter(
+      choice =>
+        typeof choice === 'string' &&
+        choice.trim().length > 0
+    )
+    .slice(0, 2);
+
 }
+
 
 // ============================================================
 // ANALYZE DRAWING
 // ============================================================
 
-async function analyzeDrawing(imageBase64) {
+async function analyzeDrawing(imageBase64, chapterNumber) {
 
   const prompt = `
-You are the AI story engine for DoodleTales.
 
-A child has drawn something on paper.
+You are Gemini, the creative story engine for a children's
+interactive storybook called DoodleTales.
 
-Analyze the drawing carefully.
+A child has just drawn a picture.
+
+This is Chapter ${chapterNumber} of their story.
+
+Carefully look at the drawing and identify what the child
+created.
+
+The drawing may be:
+- rough
+- simple
+- abstract
+- colorful
+- unfinished
+- child-like
+
+Do NOT reject the drawing because it is imperfect.
 
 Identify:
 
-- the main character
-- character type
-- primary color
-- mood
-- appropriate story scene
-- what the character is doing
+1. The main character or object
+2. What kind of character/object it is
+3. Its main color
+4. Its mood
+5. What it appears to be doing
+6. A suitable story scene
 
-The drawing may be rough, simple, abstract, or child-like.
-Do not reject it because it is imperfect.
+Then write the next chapter of the story.
 
-Then create a short children's story.
+IMPORTANT:
 
-The story must:
+This is an interactive children's story.
 
-- be 2-3 sentences
-- be playful and imaginative
-- directly address the child
-- introduce the drawn character
-- match the drawing
+The story should:
+- be 3-5 sentences
+- be exciting and imaginative
 - be appropriate for children
+- directly use details from the drawing
+- make the drawing feel important
+- connect naturally to the previous chapter when one exists
+- make the child feel like they created the story
+
+For this scan, this is a NEW chapter.
+
+Return exactly TWO possible choices for what happens next.
+
+The choices should:
+- be simple enough for a child
+- be different from each other
+- move the story forward
+- describe an action
+
+Allowed animations:
+
+fly
+bounce
+walk
+jump
+shake
+float
+spin
+idle
+
+Allowed scenes:
+
+forest
+castle
+space
+ocean
+city
+playground
+
+Return ONLY valid JSON.
+
+`;
+
+
+  let lastError = null;
+
+
+  for (
+    const model of ANALYSIS_MODELS
+  ) {
+
+    try {
+
+      console.log(
+        `🧠 Trying ${model}...`
+      );
+
+
+      const response =
+        await callWithRetry(
+          () =>
+            ai.models.generateContent({
+
+              model,
+
+              contents: [
+
+                {
+                  text: prompt
+                },
+
+                {
+                  inlineData: {
+
+                    mimeType:
+                      'image/jpeg',
+
+                    data:
+                      imageBase64
+
+                  }
+
+                }
+
+              ],
+
+              config: {
+
+                responseMimeType:
+                  'application/json',
+
+                responseSchema:
+                  storySchema
+
+              }
+
+            }),
+
+          1
+        );
+
+
+      console.log(
+        `✅ ${model} succeeded`
+      );
+
+
+      const result =
+        JSON.parse(
+          response.text
+        );
+
+
+      result.choices =
+        cleanChoices(
+          result.choices
+        );
+
+
+      // Guarantee two choices.
+      if (
+        result.choices.length < 2
+      ) {
+
+        result.choices = [
+
+          'Explore what happens next',
+
+          'Go somewhere new'
+
+        ];
+
+      }
+
+
+      return result;
+
+
+    } catch (error) {
+
+      lastError =
+        error;
+
+
+      const status =
+        error?.status ||
+        error?.statusCode ||
+        error?.response?.status;
+
+
+      console.log(
+        `❌ ${model} failed with status ${status}`
+      );
+
+
+      if (
+        status === 500 ||
+        status === 503 ||
+        status === 429
+      ) {
+
+        console.log(
+          '➡️ Trying next analysis model...'
+        );
+
+        continue;
+
+      }
+
+
+      throw error;
+
+    }
+
+  }
+
+
+  throw lastError;
+
+}
+
+
+// ============================================================
+// CONTINUE STORY
+// ============================================================
+
+async function continueStory(
+  character,
+  currentStory,
+  choice,
+  currentScene
+) {
+
+  const prompt = `
+
+You are the story engine for DoodleTales,
+a children's interactive storybook.
+
+The child is creating an ongoing story.
+
+Main character:
+${character}
+
+Current scene:
+${currentScene || 'playground'}
+
+Story so far:
+${currentStory}
+
+The child chose:
+
+"${choice}"
+
+Now write the NEXT CHAPTER of the story.
+
+IMPORTANT:
+
+This must feel like a completely new chapter that
+continues directly from the previous story.
+
+The child's choice MUST affect what happens.
+
+Rules:
+
+- Write 3-5 sentences.
+- Keep the same main character.
+- Continue naturally from the story so far.
+- Do NOT restart the story.
+- Do NOT repeat the previous chapter.
+- Make the child's choice clearly affect the events.
+- Introduce a new event, action, discovery, or problem.
+- Keep the story playful and imaginative.
+- Keep it appropriate for children.
+- Do not mention AI.
+- Do not mention that this is a generated story.
+- Do not introduce a completely unrelated character.
+- Make the chapter feel like the next page of the same adventure.
 
 Then provide exactly TWO choices for what the child
 can make the character do next.
@@ -317,297 +580,27 @@ ocean
 city
 playground
 
-Return only JSON.
+Return ONLY valid JSON.
+
 `;
+
 
   let lastError = null;
 
-  for (const model of ANALYSIS_MODELS) {
 
-    try {
-
-      console.log(`🧠 Trying ${model}...`);
-
-      const response = await callWithRetry(
-        () =>
-          ai.models.generateContent({
-
-            model,
-
-            contents: [
-
-              {
-                text: prompt
-              },
-
-              {
-                inlineData: {
-                  mimeType: 'image/jpeg',
-                  data: imageBase64
-                }
-              }
-
-            ],
-
-            config: {
-              responseMimeType: 'application/json',
-              responseSchema: storySchema
-            }
-
-          }),
-
-        1
-      );
-
-      console.log(
-        `✅ ${model} succeeded`
-      );
-
-      return JSON.parse(response.text);
-
-    } catch (error) {
-
-      lastError = error;
-
-      const status =
-        error?.status ||
-        error?.statusCode ||
-        error?.response?.status;
-
-      console.log(
-        `❌ ${model} failed with status ${status}`
-      );
-
-      if (
-        status === 500 ||
-        status === 503 ||
-        status === 429
-      ) {
-
-        console.log(
-          '➡️ Trying next analysis model...'
-        );
-
-        continue;
-      }
-
-      throw error;
-    }
-  }
-
-  throw lastError;
-}
-
-// ============================================================
-// IMAGE GENERATION
-// ============================================================
-
-async function generateStoryImage(
-  imageBase64,
-  storyData
-) {
-
-  console.log(
-    `🎨 Generating polished storybook image with ${IMAGE_MODEL}...`
-  );
-
-  const imagePrompt = `
-Create a polished children's storybook illustration
-based directly on the child's original drawing.
-
-Preserve the main character's recognizable shape,
-identity, and primary color.
-
-Character:
-${storyData.character}
-
-Type:
-${storyData.type}
-
-Color:
-${storyData.color}
-
-Mood:
-${storyData.mood}
-
-Scene:
-${storyData.scene}
-
-Action:
-${storyData.action}
-
-Story:
-${storyData.story}
-
-Make it colorful, friendly, playful, and suitable
-for children.
-
-Do not include text, words, captions, or speech bubbles.
-
-Use a 16:9 storybook composition.
-`;
-
-  try {
-
-    const interaction =
-      await ai.interactions.create({
-
-        model: IMAGE_MODEL,
-
-        input: [
-
-          {
-            type: 'image',
-            data: imageBase64,
-            mime_type: 'image/jpeg'
-          },
-
-          {
-            type: 'text',
-            text: imagePrompt
-          }
-
-        ],
-
-        response_format: {
-          type: 'image',
-          mime_type: 'image/jpeg',
-          aspect_ratio: '16:9',
-          image_size: '1K'
-        }
-
-      });
-
-    if (
-      interaction &&
-      Array.isArray(interaction.outputs)
-    ) {
-
-      for (
-        const output of interaction.outputs
-      ) {
-
-        if (
-          output?.type === 'image' &&
-          output?.data
-        ) {
-
-          console.log(
-            '✅ Storybook image generated!'
-          );
-
-          return output.data;
-        }
-      }
-    }
-
-    return null;
-
-  } catch (error) {
-
-    const status =
-      error?.status ||
-      error?.statusCode ||
-      error?.response?.status;
-
-    console.log(
-      `⚠️ Image generation failed (${status}).`
-    );
-
-    console.log(
-      error?.message || error
-    );
-
-    // Your current Free Tier has 0 image quota.
-    if (status === 429) {
-
-      console.log(
-        'ℹ️ Image generation quota unavailable.'
-      );
-
-      return null;
-    }
-
-    return null;
-  }
-}
-
-// ============================================================
-// CONTINUE STORY
-// ============================================================
-
-async function continueStory(
-  character,
-  currentStory,
-  choice,
-  currentScene
-) {
-
-  const prompt = `
-Continue this interactive children's story.
-
-Character:
-${character}
-
-Current story:
-${currentStory}
-
-Current scene:
-${currentScene}
-
-The child chose:
-${choice}
-
-Continue the story based directly on the child's choice.
-
-Requirements:
-
-- 2-3 sentences
-- Keep the same character
-- Continue naturally
-- Make the child feel like they control the story
-- Be playful and imaginative
-- Be appropriate for children
-- Provide exactly TWO new choices
-- Select an appropriate animation
-- Select an appropriate scene
-
-Allowed animations:
-
-fly
-bounce
-walk
-jump
-shake
-float
-spin
-idle
-
-Allowed scenes:
-
-forest
-castle
-space
-ocean
-city
-playground
-
-Return only JSON.
-`;
-
-  let lastError = null;
-
-  for (const model of ANALYSIS_MODELS) {
+  for (
+    const model of ANALYSIS_MODELS
+  ) {
 
     try {
 
       console.log(
-        `🧠 Continuing story with ${model}...`
+        `🧠 Continuing with ${model}...`
       );
+
 
       const response =
         await callWithRetry(
-
           () =>
             ai.models.generateContent({
 
@@ -620,37 +613,72 @@ Return only JSON.
               ],
 
               config: {
-                responseMimeType: 'application/json',
+
+                responseMimeType:
+                  'application/json',
+
                 responseSchema:
                   continuationSchema
+
               }
 
             }),
 
           1
-
         );
 
+
       console.log(
-        `✅ Story continuation generated`
+        `✅ ${model} continued story`
       );
 
-      return JSON.parse(
-        response.text
-      );
+
+      const result =
+        JSON.parse(
+          response.text
+        );
+
+
+      result.choices =
+        cleanChoices(
+          result.choices
+        );
+
+
+      if (
+        result.choices.length < 2
+      ) {
+
+        result.choices = [
+
+          'Keep exploring',
+
+          'Try something surprising'
+
+        ];
+
+      }
+
+
+      return result;
+
 
     } catch (error) {
 
-      lastError = error;
+      lastError =
+        error;
+
 
       const status =
         error?.status ||
         error?.statusCode ||
         error?.response?.status;
 
+
       console.log(
-        `❌ ${model} continuation failed with status ${status}`
+        `❌ ${model} failed with status ${status}`
       );
+
 
       if (
         status === 500 ||
@@ -662,139 +690,123 @@ Return only JSON.
 
       }
 
+
       throw error;
+
     }
+
   }
 
+
   throw lastError;
+
 }
 
+
 // ============================================================
-// SCAN DRAWING
+// SCAN DRAWING API
 // ============================================================
 
 app.post(
   '/api/scan-drawing',
   async (req, res) => {
 
-    console.log('');
-    console.log('==============================');
-    console.log('📷 DRAWING RECEIVED');
-    console.log('==============================');
-
     try {
 
       const {
-        imageBase64
+        imageBase64,
+        chapterNumber
       } = req.body;
+
 
       if (!imageBase64) {
 
         return res.status(400).json({
-          error: 'No drawing image provided.'
+
+          error:
+            'Drawing image is required.'
+
         });
 
       }
 
-      const cleanImageBase64 =
-        imageBase64.replace(
-          /^data:image\/\w+;base64,/,
-          ''
-        );
 
-      const data =
+      const cleanBase64 =
+        imageBase64
+          .replace(
+            /^data:image\/\w+;base64,/,
+            ''
+          );
+
+
+      const chapter =
+        Number(chapterNumber) || 1;
+
+
+      console.log('');
+      console.log(
+        '=============================='
+      );
+      console.log(
+        `🎨 SCANNING DRAWING - CHAPTER ${chapter}`
+      );
+      console.log(
+        '=============================='
+      );
+
+
+      const result =
         await analyzeDrawing(
-          cleanImageBase64
+          cleanBase64,
+          chapter
         );
 
+
       console.log(
-        `🎨 Character: ${data.character}`
+        'Character:',
+        result.character
       );
 
       console.log(
-        `🎭 Type: ${data.type}`
+        'Story:',
+        result.story
       );
 
-      console.log(
-        `🌈 Color: ${data.color}`
-      );
 
-      console.log(
-        `😊 Mood: ${data.mood}`
-      );
-
-      console.log(
-        `🌎 Scene: ${data.scene}`
-      );
-
-      console.log(
-        `🏃 Action: ${data.action}`
-      );
-
-      console.log('');
-      console.log(
-        `📖 Story: ${data.story}`
-      );
-
-      data.choices =
-        cleanChoices(
-          data.choices
-        );
-
-      // Image generation may return null
-      // because your Free Tier currently has 0 quota.
-      const generatedImage =
-        await generateStoryImage(
-          cleanImageBase64,
-          data
-        );
-
-      console.log('');
-      console.log(
-        '📤 Sending story to frontend...'
-      );
-
-      return res.json({
-
-        title:
-          data.title,
+      res.json({
 
         character:
-          data.character,
+          result.character,
 
         type:
-          data.type,
+          result.type,
 
         color:
-          data.color,
+          result.color,
 
         mood:
-          data.mood,
+          result.mood,
 
         scene:
-          data.scene,
+          result.scene,
 
         action:
-          data.action,
-
-        story:
-          data.story,
-
-        choices:
-          data.choices,
+          result.action,
 
         animation:
-          data.animation,
+          result.animation,
 
-        generated_image:
-          generatedImage,
+        story:
+          result.story,
 
-        generated_image_mime:
-          generatedImage
-            ? 'image/jpeg'
-            : null
+        choices:
+          result.choices,
+
+        chapterNumber:
+          chapter
 
       });
+
 
     } catch (error) {
 
@@ -803,16 +815,20 @@ app.post(
         error
       );
 
-      return res.status(500).json({
+
+      res.status(500).json({
 
         error:
           error?.message ||
-          'Failed to process drawing.'
+          'Could not analyze the drawing.'
 
       });
+
     }
+
   }
 );
+
 
 // ============================================================
 // CONTINUE STORY API
@@ -821,11 +837,6 @@ app.post(
 app.post(
   '/api/continue-story',
   async (req, res) => {
-
-    console.log('');
-    console.log('==============================');
-    console.log('📖 CONTINUING STORY');
-    console.log('==============================');
 
     try {
 
@@ -836,96 +847,91 @@ app.post(
         currentScene
       } = req.body;
 
-      console.log(
-        'Character received:',
-        character
-      );
-
-      console.log(
-        'Choice received:',
-        choice
-      );
 
       if (!character) {
 
         return res.status(400).json({
-          error: 'Character is required.'
+
+          error:
+            'Character is required.'
+
         });
 
       }
+
 
       if (!currentStory) {
 
         return res.status(400).json({
-          error: 'Current story is required.'
+
+          error:
+            'Current story is required.'
+
         });
 
       }
+
 
       if (!choice) {
 
         return res.status(400).json({
-          error: 'Choice is required.'
+
+          error:
+            'Choice is required.'
+
         });
 
       }
 
-      const continuation =
+
+      console.log('');
+      console.log(
+        '=============================='
+      );
+      console.log(
+        '📖 CONTINUING STORY'
+      );
+      console.log(
+        '=============================='
+      );
+
+
+      console.log(
+        'Character:',
+        character
+      );
+
+      console.log(
+        'Choice:',
+        choice
+      );
+
+
+      const result =
         await continueStory(
-
           character,
-
           currentStory,
-
           choice,
-
-          currentScene ||
-            'playground'
-
+          currentScene
         );
 
-      continuation.choices =
-        cleanChoices(
-          continuation.choices
-        );
 
-      console.log(
-        `📖 ${continuation.story}`
-      );
-
-      console.log(
-        `🎬 Animation: ${continuation.animation}`
-      );
-
-      console.log(
-        `🌎 Scene: ${continuation.scene}`
-      );
-
-      // IMPORTANT:
-      // We are NOT trying to generate another image here
-      // because your current Free Tier has 0 image quota.
-
-      return res.json({
+      res.json({
 
         story:
-          continuation.story,
-
-        animation:
-          continuation.animation,
+          result.story,
 
         scene:
-          continuation.scene,
+          result.scene,
+
+        animation:
+          result.animation,
 
         choices:
-          continuation.choices,
-
-        generated_image:
-          null,
-
-        generated_image_mime:
-          null
+          result.choices
 
       });
+
 
     } catch (error) {
 
@@ -934,16 +940,20 @@ app.post(
         error
       );
 
-      return res.status(500).json({
+
+      res.status(500).json({
 
         error:
           error?.message ||
           'Could not continue the story.'
 
       });
+
     }
+
   }
 );
+
 
 // ============================================================
 // HEALTH CHECK
@@ -954,13 +964,18 @@ app.get(
   (req, res) => {
 
     res.json({
-      status: 'ok',
-      analysis_models: ANALYSIS_MODELS,
-      image_model: IMAGE_MODEL
+
+      status:
+        'ok',
+
+      models:
+        ANALYSIS_MODELS
+
     });
 
   }
 );
+
 
 // ============================================================
 // START SERVER
@@ -976,7 +991,11 @@ app.listen(
     );
 
     console.log(
-      '🎨 DoodleTales AI Storybook'
+      '🎨 DoodleTales is running!'
+    );
+
+    console.log(
+      `🌐 http://localhost:${PORT}`
     );
 
     console.log(
@@ -984,21 +1003,11 @@ app.listen(
     );
 
     console.log(
-      `🚀 http://localhost:${PORT}`
-    );
-
-    console.log(
-      `🧠 Analysis: ${ANALYSIS_MODELS.join(', ')}`
-    );
-
-    console.log(
-      `🎨 Image: ${IMAGE_MODEL}`
+      '🧠 Analysis models:',
+      ANALYSIS_MODELS.join(', ')
     );
 
     console.log('');
-    console.log(
-      '📷 Ready to scan drawings!'
-    );
 
   }
 );
