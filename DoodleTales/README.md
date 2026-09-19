@@ -26,9 +26,10 @@ DoodleTales is an interactive AI storytelling website that turns children's draw
 1. Draw a picture.
 2. Capture the drawing with the camera.
 3. Gemini analyzes the drawing and creates a story.
-4. Choose what happens next by either uploading another picture or selecting one of the two story options. 
-5. Continue building the adventure.
+4. Listen to the story with text-to-speech narration.
+5. Choose what happens next by either uploading another picture or selecting one of the two story options.
 6. Finish and save the story as a PDF.
+7. Start a new story!
 
 ## 🎯 Use Case
 
