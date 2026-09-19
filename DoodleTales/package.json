@@ -1,0 +1,24 @@
+{
+  "name": "doodletales",
+  "version": "1.0.0",
+  "description": "Turning paper crayon doodles into live, interactive storytellers.",
+  "homepage": "https://github.com/samaah-A/DoodleTales#readme",
+  "bugs": {
+    "url": "https://github.com/samaah-A/DoodleTales/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/samaah-A/DoodleTales.git"
+  },
+  "license": "ISC",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@google/genai": "^2.23.0",
+    "dotenv": "^18.0.1",
+    "express": "^5.2.1"
+  }
+}

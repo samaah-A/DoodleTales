@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DoodleTales - AI Storybook Stage</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen p-6 font-sans">
+
+  <div class="max-w-4xl mx-auto space-y-6">
+    
+    <!-- Header -->
+    <header class="text-center space-y-2">
+      <h1 class="text-4xl font-extrabold text-amber-400 tracking-wide">🎨 DoodleTales</h1>
+      <p class="text-slate-400">Hold up a paper drawing to the camera to bring your character to life!</p>
+    </header>
+
+    <!-- Main Workspace Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      
+      <!-- Left Column: Camera Feed -->
+      <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 flex flex-col items-center space-y-4 shadow-xl">
+        <div class="relative w-full aspect-video bg-black rounded-xl overflow-hidden border border-slate-700 shadow-inner">
+          <video id="webcam" autoplay playsinline class="w-full h-full object-cover"></video>
+          <canvas id="canvas" class="hidden"></canvas>
+        </div>
+        <button id="snapBtn" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-3 rounded-xl shadow-lg transition-transform active:scale-95 text-lg">
+          📸 Scan My Drawing
+        </button>
+      </div>
+
+      <!-- Right Column: Interactive Story Stage -->
+      <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 flex flex-col justify-between min-h-[320px] relative overflow-hidden shadow-xl">
+        
+        <!-- Loading Overlay -->
+        <div id="loader" class="hidden absolute inset-0 bg-slate-900/90 backdrop-blur-sm flex flex-col items-center justify-center space-y-3 z-10">
+          <div class="w-10 h-10 border-4 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
+          <p class="text-amber-300 font-medium">Gemini is bringing your artwork to life...</p>
+        </div>
+
+        <!-- Output Story Content -->
+        <div class="space-y-4">
+          <div id="badge" class="inline-block bg-amber-500/20 text-amber-300 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider border border-amber-500/30">
+            Waiting for drawing...
+          </div>
+          <h2 id="charTitle" class="text-2xl font-bold text-white">Your Story Engine</h2>
+          <p id="storyText" class="text-slate-300 leading-relaxed italic">
+            "Draw a creature, robot, or animal on paper with crayons. Hold it up to the camera and click 'Scan My Drawing'!"
+          </p>
+        </div>
+
+        <!-- Audio Controller -->
+        <div class="pt-4 border-t border-slate-700 flex justify-between items-center">
+          <button id="speakBtn" disabled class="bg-slate-700 text-slate-400 px-4 py-2 rounded-lg font-semibold text-sm flex items-center gap-2 cursor-not-allowed">
+            🔊 Replay Speech
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Frontend Logic -->
+  <script>
+    const video = document.getElementById('webcam');
+    const canvas = document.getElementById('canvas');
+    const snapBtn = document.getElementById('snapBtn');
+    const loader = document.getElementById('loader');
+    const badge = document.getElementById('badge');
+    const charTitle = document.getElementById('charTitle');
+    const storyText = document.getElementById('storyText');
+    const speakBtn = document.getElementById('speakBtn');
+
+    let currentStory = "";
+
+    // 1. Initialize Camera Feed
+    async function startWebcam() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+        video.srcObject = stream;
+      } catch (err) {
+        alert("Camera access denied or unavailable. Please allow camera permissions.");
+      }
+    }
+    startWebcam();
+
+    // 2. Capture Frame from Video Feed
+    function captureSnapshot() {
+      const context = canvas.getContext('2d');
+      canvas.width = video.videoWidth || 640;
+      canvas.height = video.videoHeight || 480;
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      return canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+    }
+
+    // 3. Send Frame to Backend Endpoint
+    snapBtn.addEventListener('click', async () => {
+      loader.classList.remove('hidden');
+      const base64Image = captureSnapshot();
+
+      try {
+        const response = await fetch('/api/scan-drawing', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageBase64: base64Image })
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to process drawing.");
+        }
+
+        const data = await response.json();
+
+        // Update UI
+        badge.innerText = "Character Recognized!";
+        charTitle.innerText = data.character_name;
+        storyText.innerText = `"${data.story}"`;
+        currentStory = data.story;
+
+        // Automatically Narrate Story
+        speakText(data.story);
+
+        // Enable Audio Replay Button
+        speakBtn.disabled = false;
+        speakBtn.classList.remove('bg-slate-700', 'text-slate-400', 'cursor-not-allowed');
+        speakBtn.classList.add('bg-amber-500/20', 'text-amber-300', 'hover:bg-amber-500/30');
+
+      } catch (err) {
+        console.error(err);
+        alert("Error analyzing drawing. Ensure your backend server is running and GEMINI_API_KEY is valid in .env.");
+      } finally {
+        loader.classList.add('hidden');
+      }
+    });
+
+    // 4. Browser Text-to-Speech Synthesis
+    function speakText(text) {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 0.9;
+        utterance.pitch = 1.1;
+        window.speechSynthesis.speak(utterance);
+      }
+    }
+
+    speakBtn.addEventListener('click', () => {
+      if (currentStory) speakText(currentStory);
+    });
+  </script>
+</body>
+</html>
