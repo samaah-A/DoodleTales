@@ -17,6 +17,8 @@ DoodleTales is an interactive AI storytelling website that turns children's draw
 * HTML
 * CSS
 * JavaScript
+* Node.js
+* Express.js
 * Gemini API
 * Vercel
 * jsPDF
